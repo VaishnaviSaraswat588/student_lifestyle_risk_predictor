@@ -1,1 +1,1 @@
-# student_lifestyle_risk_predictor
+# Student lifestyle & depression risk model
