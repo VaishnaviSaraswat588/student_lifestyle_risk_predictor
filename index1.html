@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Notes — Student Lifestyle Risk Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{
+    --paper:#F6F5F0;
+    --surface:#FFFFFF;
+    --ink:#22262B;
+    --ink-soft:#5B6169;
+    --hair:#DEDBD1;
+    --accent:#2D6E63;
+    --accent-soft:#E4EEEC;
+    --risk-low:#3F7D5C;
+    --risk-low-bg:#E7F1EA;
+    --risk-mid:#B5811F;
+    --risk-mid-bg:#F7ECD8;
+    --risk-high:#B0483A;
+    --risk-high-bg:#F6E4E0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 24px;}
+  a{color:var(--accent);}
+
+  /* ---------- Hero ---------- */
+  header.hero{
+    border-bottom:1px solid var(--hair);
+    padding:64px 0 48px;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 18px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:clamp(32px,5vw,52px);
+    line-height:1.08;
+    margin:0 0 20px;
+    max-width:15ch;
+  }
+  header.hero p.lede{
+    font-size:18px;
+    color:var(--ink-soft);
+    max-width:56ch;
+    margin:0 0 28px;
+  }
+  .hero-stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--hair);
+    border:1px solid var(--hair);
+    margin-top:8px;
+  }
+  .hero-stats div{
+    background:var(--paper);
+    padding:14px 16px;
+  }
+  .hero-stats .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:20px;
+    font-weight:500;
+  }
+  .hero-stats .lab{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+
+  section{padding:56px 0;border-bottom:1px solid var(--hair);}
+  section:last-of-type{border-bottom:none;}
+  h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:26px;
+    margin:0 0 8px;
+  }
+  .section-sub{color:var(--ink-soft);margin:0 0 32px;max-width:60ch;font-size:15px;}
+
+  /* ---------- Form + result ---------- */
+  .grid-2{display:grid;grid-template-columns:1.1fr 1fr;gap:40px;align-items:start;}
+  @media (max-width:760px){.grid-2{grid-template-columns:1fr;}}
+
+  .field{margin-bottom:20px;}
+  .field label{
+    display:flex;justify-content:space-between;
+    font-size:13px;color:var(--ink-soft);margin-bottom:6px;
+  }
+  .field label span.val{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink);
+    font-weight:500;
+  }
+  input[type=range]{
+    width:100%;height:4px;border-radius:2px;
+    background:var(--hair);appearance:none;-webkit-appearance:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    appearance:none;-webkit-appearance:none;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--accent);cursor:pointer;
+    border:2px solid var(--surface);
+    box-shadow:0 0 0 1px var(--accent);
+  }
+  select{
+    width:100%;padding:9px 10px;border:1px solid var(--hair);
+    border-radius:6px;background:var(--surface);font-family:'Inter',sans-serif;
+    font-size:14px;color:var(--ink);
+  }
+  .two-col-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+  /* ---------- Result card ---------- */
+  .result-card{
+    background:var(--surface);
+    border:1px solid var(--hair);
+    border-radius:12px;
+    padding:28px;
+    position:sticky;
+    top:24px;
+  }
+  .gauge-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:20px;}
+  .risk-pct{
+    font-family:'Fraunces',serif;
+    font-size:52px;
+    font-weight:500;
+    line-height:1;
+    margin-top:8px;
+  }
+  .risk-band{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:4px 12px;
+    border-radius:20px;
+    margin-top:10px;
+  }
+  .band-low{background:var(--risk-low-bg);color:var(--risk-low);}
+  .band-mid{background:var(--risk-mid-bg);color:var(--risk-mid);}
+  .band-high{background:var(--risk-high-bg);color:var(--risk-high);}
+
+  .factors{margin-top:20px;}
+  .factors h3{
+    font-size:13px;text-transform:uppercase;letter-spacing:.05em;
+    color:var(--ink-soft);margin:0 0 12px;font-weight:500;
+  }
+  .factor-row{margin-bottom:12px;}
+  .factor-row .flabel{
+    display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;
+  }
+  .factor-bar-track{height:6px;background:var(--hair);border-radius:3px;overflow:hidden;}
+  .factor-bar-fill{height:100%;border-radius:3px;}
+  .fill-up{background:var(--risk-high);}
+  .fill-down{background:var(--risk-low);}
+
+  .disclaimer{
+    margin-top:22px;padding-top:18px;border-top:1px solid var(--hair);
+    font-size:12.5px;color:var(--ink-soft);
+  }
+
+  /* ---------- Distribution chart ---------- */
+  .dist-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+  .dist-controls button{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    padding:7px 14px;border-radius:20px;border:1px solid var(--hair);
+    background:var(--surface);color:var(--ink-soft);cursor:pointer;
+  }
+  .dist-controls button.active{
+    background:var(--accent);border-color:var(--accent);color:#fff;
+  }
+  .chart-box{position:relative;height:280px;background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:16px;}
+  .dist-caption{font-size:13px;color:var(--ink-soft);margin-top:10px;}
+
+  /* ---------- Model info ---------- */
+  .metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin-bottom:28px;}
+  @media (max-width:700px){.metric-grid{grid-template-columns:repeat(2,1fr);}}
+  .metric-grid div{background:var(--surface);padding:18px 14px;}
+  .metric-grid .m-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;}
+  .metric-grid .m-lab{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+
+  table.cm{border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;margin-bottom:8px;}
+  table.cm td, table.cm th{border:1px solid var(--hair);padding:10px 16px;text-align:center;}
+  table.cm th{background:var(--accent-soft);font-weight:500;font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-soft);}
+
+  .about-box{background:var(--surface);border:1px solid var(--hair);border-radius:12px;padding:24px;margin-top:24px;font-size:14.5px;color:var(--ink-soft);}
+  .about-box strong{color:var(--ink);}
+
+  footer{padding:36px 0 60px;font-size:13px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">Data science case study · logistic regression · client-side inference</p>
+    <h1>What actually predicts a student's depression risk?</h1>
+    <p class="lede">
+      A model trained on 100,000 student lifestyle records — sleep, study
+      hours, stress, CGPA, screen time — running live in your browser.
+      Move the sliders below and watch the risk estimate update instantly,
+      no server involved.
+    </p>
+    <div class="hero-stats">
+      <div><div class="num">100,000</div><div class="lab">students in training data</div></div>
+      <div><div class="num">0.693</div><div class="lab">ROC-AUC (test set)</div></div>
+      <div><div class="num">67.8%</div><div class="lab">recall on depression cases</div></div>
+      <div><div class="num">13</div><div class="lab">model features</div></div>
+    </div>
+  </header>
+
+  <section id="try-it">
+    <h2>Try the model</h2>
+    <p class="section-sub">Set your own lifestyle numbers. The prediction below is computed entirely in JavaScript using the exact fitted logistic regression weights — nothing is sent anywhere.</p>
+
+    <div class="grid-2">
+      <div>
+        <div class="field">
+          <label>Sleep duration <span class="val" id="v-sleep">7.0 hrs</span></label>
+          <input type="range" id="sleep" min="3" max="12" step="0.1" value="7">
+        </div>
+        <div class="field">
+          <label>Study hours / day <span class="val" id="v-study">4.5 hrs</span></label>
+          <input type="range" id="study" min="0" max="13" step="0.1" value="4.5">
+        </div>
+        <div class="field">
+          <label>Social media hours / day <span class="val" id="v-social">3.5 hrs</span></label>
+          <input type="range" id="social" min="0" max="10" step="0.1" value="3.5">
+        </div>
+        <div class="field">
+          <label>Physical activity <span class="val" id="v-activity">74 min/wk</span></label>
+          <input type="range" id="activity" min="0" max="150" step="1" value="74">
+        </div>
+        <div class="field">
+          <label>Stress level (1-10) <span class="val" id="v-stress">4</span></label>
+          <input type="range" id="stress" min="1" max="10" step="1" value="4">
+        </div>
+        <div class="field">
+          <label>CGPA <span class="val" id="v-cgpa">2.90</span></label>
+          <input type="range" id="cgpa" min="1.5" max="4.0" step="0.01" value="2.90">
+        </div>
+        <div class="two-col-fields">
+          <div class="field">
+            <label>Age <span class="val" id="v-age">21</span></label>
+            <input type="range" id="age" min="18" max="24" step="1" value="21">
+          </div>
+          <div class="field">
+            <label>Gender</label>
+            <select id="gender">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Department</label>
+          <select id="department">
+            <option value="Arts">Arts</option>
+            <option value="Business">Business</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Medical">Medical</option>
+            <option value="Science">Science</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="gauge-wrap">
+          <canvas id="gauge" width="220" height="130"></canvas>
+          <div class="risk-pct" id="risk-pct">—</div>
+          <div class="risk-band" id="risk-band">—</div>
+        </div>
+        <div class="factors">
+          <h3>What's driving this estimate</h3>
+          <div id="factor-list"></div>
+        </div>
+        <div class="disclaimer">
+          This is a demonstration model trained on a single synthetic/survey-style
+          dataset. It is <strong>not a diagnostic tool</strong> and should not be
+          used to assess real mental health. If you're struggling, please talk to
+          a doctor, counselor, or a trusted person in your life.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="distributions">
+    <h2>How your inputs compare</h2>
+    <p class="section-sub">The dashed line marks your current slider value against the real distribution of all 100,000 students in the dataset.</p>
+    <div class="dist-controls" id="dist-controls"></div>
+    <div class="chart-box"><canvas id="distChart"></canvas></div>
+    <p class="dist-caption" id="dist-caption"></p>
+  </section>
+
+  <section id="about">
+    <h2>About this model</h2>
+    <p class="section-sub">Full transparency on how it was built, so you can judge the estimate above for what it is.</p>
+
+    <div class="metric-grid">
+      <div><div class="m-val">63.7%</div><div class="m-lab">accuracy</div></div>
+      <div><div class="m-val">17.1%</div><div class="m-lab">precision</div></div>
+      <div><div class="m-val">67.8%</div><div class="m-lab">recall</div></div>
+      <div><div class="m-val">0.273</div><div class="m-lab">F1 score</div></div>
+      <div><div class="m-val">0.693</div><div class="m-lab">ROC-AUC</div></div>
+    </div>
+
+    <table class="cm">
+      <tr><th></th><th>Predicted: no depression</th><th>Predicted: depression</th></tr>
+      <tr><th>Actual: no depression</th><td>11,378</td><td>6,610</td></tr>
+      <tr><th>Actual: depression</th><td>647</td><td>1,365</td></tr>
+    </table>
+    <p class="dist-caption">Confusion matrix on a held-out 20,000-row test set (20% split).</p>
+
+    <div class="about-box">
+      <p><strong>Model:</strong> logistic regression (scikit-learn), features standardized, <code>class_weight="balanced"</code> to compensate for depression being only ~10% of rows.</p>
+      <p><strong>Features:</strong> sleep duration, study hours, social media hours, physical activity, stress level, an engineered "high stress" flag (stress ≥ 8, added because the raw data shows depression risk roughly quadruples at that threshold rather than rising smoothly), CGPA, age, gender, and department (one-hot).</p>
+      <p><strong>Strongest signal:</strong> CGPA and the high-stress flag dominate the standardized coefficients — lower CGPA and crossing the stress-8 threshold are the two biggest movers. Sleep duration has a smaller but consistent negative effect. Department and gender contribute almost nothing.</p>
+      <p><strong>Why recall over accuracy:</strong> for a health-adjacent risk flag, missing true cases (false negatives) is costlier than over-flagging, so the model is tuned to catch ~68% of real depression cases at the cost of a higher false-positive rate — a deliberate precision/recall trade-off, not an accident.</p>
+      <p><strong>Caveat:</strong> ROC-AUC of 0.69 means the model is meaningfully better than chance but far from a reliable individual-level predictor. Real mental health risk depends on far more than eight lifestyle numbers.</p>
+    </div>
+  </section>
+
+  <footer>
+    Built as a portfolio case study on a 100,000-row student lifestyle dataset. Model trained in Python (scikit-learn), exported to run entirely client-side — no backend, no data leaves your browser.
+  </footer>
+</div>
+
+<script>
+/* ---------------- Model (exact numbers from train_model.py / model_export.json) ---------------- */
+const MODEL = {
+  feature_order: ["Sleep_Duration","Study_Hours","Social_Media_Hours","Physical_Activity","Stress_Level","High_Stress","CGPA","Age","Gender_Male","Dept_Business","Dept_Engineering","Dept_Medical","Dept_Science"],
+  coefficients: [-0.03422,-0.00708,0.00002,0.003,0.04974,0.26502,-0.62153,-0.02021,0.00933,-0.00069,-0.00919,-0.02091,-0.02569],
+  intercept: -0.19787,
+  scaler_mean: [6.99785,4.50996,3.5001,74.2952,4.12916,0.01985,2.89854,21.01302,0.50106,0.1993,0.20059,0.20005,0.20051],
+  scaler_scale: [1.49758,1.97335,1.48671,43.34253,1.42361,0.13948,0.53214,2.0023,0.5,0.39947,0.40044,0.40004,0.40038]
+};
+
+const DIST = {
+  "Sleep_Duration": {label:"Sleep duration (hrs)", edges:[3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,12.0], counts:[908,1229,2449,4087,6548,9103,11548,12930,13098,11780,9711,6902,4585,2692,1340,639,279,172]},
+  "Study_Hours": {label:"Study hours / day", edges:[0,1,2,3,4,5,6,7,8,9,10,11,12,13], counts:[3786,6280,11818,17218,19873,17732,12332,6682,2973,981,253,64,8]},
+  "Social_Media_Hours": {label:"Social media hours / day", edges:[0,1,2,3,4,5,6,7,8,9,10], counts:[4460,10624,20733,26087,21489,11426,4146,891,130,14]},
+  "Physical_Activity": {label:"Physical activity (min/wk)", edges:[0,10,20,30,40,50,60,70,80,90,100,110,120,130,140,150], counts:[6712,6757,6651,6773,6742,6636,6581,6644,6584,6544,6712,6635,6672,6713,6644]},
+  "Stress_Level": {label:"Stress level", edges:[2,3,4,5,6,7,8,9,10], counts:[13591,22666,23326,24525,11653,2255,1506,478]},
+  "CGPA": {label:"CGPA", edges:[1.5,1.75,2.0,2.25,2.5,2.75,3.0,3.25,3.5,3.75,4.0], counts:[51,1486,12418,13550,14027,13817,13934,13839,12733,4145]}
+};
+
+function sigmoid(z){ return 1/(1+Math.exp(-z)); }
+
+function buildFeatureVector(vals){
+  const highStress = vals.stress >= 8 ? 1 : 0;
+  const genderMale = vals.gender === "Male" ? 1 : 0;
+  const dept = vals.department;
+  return {
+    Sleep_Duration: vals.sleep,
+    Study_Hours: vals.study,
+    Social_Media_Hours: vals.social,
+    Physical_Activity: vals.activity,
+    Stress_Level: vals.stress,
+    High_Stress: highStress,
+    CGPA: vals.cgpa,
+    Age: vals.age,
+    Gender_Male: genderMale,
+    Dept_Business: dept === "Business" ? 1 : 0,
+    Dept_Engineering: dept === "Engineering" ? 1 : 0,
+    Dept_Medical: dept === "Medical" ? 1 : 0,
+    Dept_Science: dept === "Science" ? 1 : 0
+  };
+}
+
+function predict(vals){
+  const fv = buildFeatureVector(vals);
+  let z = MODEL.intercept;
+  const contributions = [];
+  MODEL.feature_order.forEach((name, i) => {
+    const raw = fv[name];
+    const standardized = (raw - MODEL.scaler_mean[i]) / MODEL.scaler_scale[i];
+    const contrib = standardized * MODEL.coefficients[i];
+    z += contrib;
+    contributions.push({name, contrib});
+  });
+  const prob = sigmoid(z);
+  return {prob, contributions};
+}
+
+const FRIENDLY_NAMES = {
+  Sleep_Duration: "Sleep duration",
+  Study_Hours: "Study hours",
+  Social_Media_Hours: "Social media use",
+  Physical_Activity: "Physical activity",
+  Stress_Level: "Stress level",
+  High_Stress: "Crossing the high-stress threshold",
+  CGPA: "CGPA",
+  Age: "Age",
+  Gender_Male: "Gender",
+  Dept_Business: "Department (Business)",
+  Dept_Engineering: "Department (Engineering)",
+  Dept_Medical: "Department (Medical)",
+  Dept_Science: "Department (Science)"
+};
+
+function readInputs(){
+  return {
+    sleep: parseFloat(document.getElementById('sleep').value),
+    study: parseFloat(document.getElementById('study').value),
+    social: parseFloat(document.getElementById('social').value),
+    activity: parseFloat(document.getElementById('activity').value),
+    stress: parseFloat(document.getElementById('stress').value),
+    cgpa: parseFloat(document.getElementById('cgpa').value),
+    age: parseFloat(document.getElementById('age').value),
+    gender: document.getElementById('gender').value,
+    department: document.getElementById('department').value
+  };
+}
+
+function updateLabels(vals){
+  document.getElementById('v-sleep').textContent = vals.sleep.toFixed(1) + ' hrs';
+  document.getElementById('v-study').textContent = vals.study.toFixed(1) + ' hrs';
+  document.getElementById('v-social').textContent = vals.social.toFixed(1) + ' hrs';
+  document.getElementById('v-activity').textContent = Math.round(vals.activity) + ' min/wk';
+  document.getElementById('v-stress').textContent = vals.stress;
+  document.getElementById('v-cgpa').textContent = vals.cgpa.toFixed(2);
+  document.getElementById('v-age').textContent = Math.round(vals.age);
+}
+
+let gaugeChart;
+function drawGauge(prob){
+  const pct = Math.round(prob*100);
+  const remainder = 100 - pct;
+  const color = pct < 20 ? '#3F7D5C' : pct < 40 ? '#B5811F' : '#B0483A';
+  const data = {
+    datasets: [{
+      data: [pct, remainder],
+      backgroundColor: [color, '#E7E5DD'],
+      borderWidth: 0,
+      circumference: 180,
+      rotation: 270,
+      cutout: '72%'
+    }]
+  };
+  if(gaugeChart){
+    gaugeChart.data = data;
+    gaugeChart.update();
+  } else {
+    gaugeChart = new Chart(document.getElementById('gauge'), {
+      type: 'doughnut',
+      data,
+      options: {
+        responsive:false,
+        plugins:{ legend:{display:false}, tooltip:{enabled:false} }
+      }
+    });
+  }
+}
+
+function updateResult(){
+  const vals = readInputs();
+  updateLabels(vals);
+  const {prob, contributions} = predict(vals);
+  const pct = Math.round(prob*100);
+  document.getElementById('risk-pct').textContent = pct + '%';
+  drawGauge(prob);
+
+  const bandEl = document.getElementById('risk-band');
+  let bandLabel, bandClass;
+  if(pct < 20){ bandLabel = 'Low estimated risk'; bandClass='band-low'; }
+  else if(pct < 40){ bandLabel = 'Medium estimated risk'; bandClass='band-mid'; }
+  else { bandLabel = 'High estimated risk'; bandClass='band-high'; }
+  bandEl.textContent = bandLabel;
+  bandEl.className = 'risk-band ' + bandClass;
+
+  // top contributing factors (exclude department/gender clutter unless notable)
+  const sorted = contributions
+    .filter(c => Math.abs(c.contrib) > 0.005)
+    .sort((a,b) => Math.abs(b.contrib) - Math.abs(a.contrib))
+    .slice(0,4);
+
+  const maxAbs = Math.max(...sorted.map(c => Math.abs(c.contrib)), 0.01);
+  const list = document.getElementById('factor-list');
+  list.innerHTML = '';
+  sorted.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'factor-row';
+    const dir = c.contrib > 0 ? 'increasing' : 'decreasing';
+    const width = Math.round((Math.abs(c.contrib)/maxAbs)*100);
+    row.innerHTML = `
+      <div class="flabel"><span>${FRIENDLY_NAMES[c.name]}</span><span>${dir} risk</span></div>
+      <div class="factor-bar-track"><div class="factor-bar-fill ${c.contrib>0?'fill-up':'fill-down'}" style="width:${width}%"></div></div>
+    `;
+    list.appendChild(row);
+  });
+
+  updateDistChart();
+}
+
+/* ---------------- Distribution chart ---------------- */
+let distChart;
+let currentDistKey = 'Sleep_Duration';
+const valueGetters = {
+  Sleep_Duration: () => parseFloat(document.getElementById('sleep').value),
+  Study_Hours: () => parseFloat(document.getElementById('study').value),
+  Social_Media_Hours: () => parseFloat(document.getElementById('social').value),
+  Physical_Activity: () => parseFloat(document.getElementById('activity').value),
+  Stress_Level: () => parseFloat(document.getElementById('stress').value),
+  CGPA: () => parseFloat(document.getElementById('cgpa').value)
+};
+
+function buildDistControls(){
+  const wrap = document.getElementById('dist-controls');
+  Object.keys(DIST).forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = DIST[key].label;
+    btn.dataset.key = key;
+    if(key === currentDistKey) btn.classList.add('active');
+    btn.onclick = () => {
+      currentDistKey = key;
+      document.querySelectorAll('#dist-controls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateDistChart();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function updateDistChart(){
+  const d = DIST[currentDistKey];
+  const labels = d.edges.slice(0,-1).map((e,i) => {
+    const lo = e, hi = d.edges[i+1];
+    return (currentDistKey==='Stress_Level') ? String(Math.round(lo)) : `${lo}–${hi}`;
+  });
+  const userVal = valueGetters[currentDistKey]();
+
+  // find which bin the user's value falls into
+  let userBinIndex = -1;
+  for(let i=0;i<d.edges.length-1;i++){
+    if(userVal >= d.edges[i] && userVal <= d.edges[i+1]+1e-9){ userBinIndex = i; break; }
+  }
+  const colors = d.counts.map((_,i) => i === userBinIndex ? '#2D6E63' : '#CBD6D2');
+
+  const data = {
+    labels,
+    datasets: [{
+      label: 'Students',
+      data: d.counts,
+      backgroundColor: colors,
+      borderRadius: 3,
+      maxBarThickness: 34
+    }]
+  };
+
+  if(distChart){
+    distChart.data = data;
+    distChart.update();
+  } else {
+    distChart = new Chart(document.getElementById('distChart'), {
+      type: 'bar',
+      data,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: (c) => c.parsed.y.toLocaleString() + ' students' } }
+        },
+        scales: {
+          x: { grid: { display:false }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: '#EDEAE1' }, ticks: { callback: v => v.toLocaleString() } }
+        }
+      }
+    });
+  }
+
+  const total = d.counts.reduce((a,b)=>a+b,0);
+  const userCount = userBinIndex >= 0 ? d.counts[userBinIndex] : 0;
+  const pctOfPop = userBinIndex >= 0 ? Math.round((userCount/total)*100) : 0;
+  document.getElementById('dist-caption').textContent =
+    `Your value (${userVal}) falls in a bin shared by about ${pctOfPop}% of the ${total.toLocaleString()} students in the dataset.`;
+}
+
+/* ---------------- Wire up events ---------------- */
+['sleep','study','social','activity','stress','cgpa','age'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateResult);
+});
+document.getElementById('gender').addEventListener('change', updateResult);
+document.getElementById('department').addEventListener('change', updateResult);
+
+buildDistControls();
+updateResult();
+</script>
+</body>
+</html>
